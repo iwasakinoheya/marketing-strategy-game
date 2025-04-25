@@ -12,16 +12,18 @@ from agents import Agent, Runner
 from dotenv import load_dotenv
 from agents import set_default_openai_key
 
-# .env 読み込み（ローカルのみ、Cloudでは無視される）
+
+# ローカルの .env を読み込み（Cloudでは無視される）
 load_dotenv()
+
+# 🔧 デバッグ表示を有効にするかどうか（Falseで本番表示オフ）
+debug_mode = False
 
 # 環境に応じてAPIキーを取得
 def get_openai_key():
-    # 優先：Streamlit Cloud Secrets
     if "OPENAI_API_KEY" in st.secrets:
         st.session_state["key_source"] = "🔐 st.secrets"
         return st.secrets["OPENAI_API_KEY"]
-    # 次点：ローカル .env
     elif os.getenv("OPENAI_API_KEY"):
         st.session_state["key_source"] = "🧪 os.getenv (.env)"
         return os.getenv("OPENAI_API_KEY")
@@ -29,15 +31,18 @@ def get_openai_key():
         st.session_state["key_source"] = "❌ 未設定"
         return None
 
-# APIキーを取得
+# APIキー取得とセット
 api_key = get_openai_key()
-
-# デバッグ表示（Streamlit Cloud上で確認用）
-st.caption(f"キー取得元: {st.session_state['key_source']}")
 if api_key:
-    st.success("✅ OpenAI APIキーが取得できています。")
-else:
-    st.error("❌ OpenAI APIキーが取得できません。Secretsまたは.envを確認してください。")
+    set_default_openai_key(api_key)
+
+# 🔍 デバッグ表示（必要に応じてON/OFF）
+if debug_mode:
+    st.caption(f"キー取得元: {st.session_state['key_source']}")
+    if api_key:
+        st.success(f"✅ APIキーが取得されました（先頭: {api_key[:10]}...）")
+    else:
+        st.error("❌ APIキーが取得できませんでした。")
 
 # OpenAIエージェントSDKに設定
 if api_key:
