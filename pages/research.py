@@ -17,15 +17,30 @@ load_dotenv()
 
 # 環境に応じてAPIキーを取得
 def get_openai_key():
+    # 優先：Streamlit Cloud Secrets
     if "OPENAI_API_KEY" in st.secrets:
+        st.session_state["key_source"] = "🔐 st.secrets"
         return st.secrets["OPENAI_API_KEY"]
-    return os.getenv("OPENAI_API_KEY")
+    # 次点：ローカル .env
+    elif os.getenv("OPENAI_API_KEY"):
+        st.session_state["key_source"] = "🧪 os.getenv (.env)"
+        return os.getenv("OPENAI_API_KEY")
+    else:
+        st.session_state["key_source"] = "❌ 未設定"
+        return None
 
-# エージェントSDKにセット
+# APIキーを取得
 api_key = get_openai_key()
-if not api_key:
-    st.error("❌ OpenAI APIキーが設定されていません。Secretsまたは.envに設定してください。")
+
+# デバッグ表示（Streamlit Cloud上で確認用）
+st.caption(f"キー取得元: {st.session_state['key_source']}")
+if api_key:
+    st.success("✅ OpenAI APIキーが取得できています。")
 else:
+    st.error("❌ OpenAI APIキーが取得できません。Secretsまたは.envを確認してください。")
+
+# OpenAIエージェントSDKに設定
+if api_key:
     set_default_openai_key(api_key)
 
 # サイドバー表示
