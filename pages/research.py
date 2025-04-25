@@ -12,9 +12,21 @@ from agents import Agent, Runner
 from dotenv import load_dotenv
 from agents import set_default_openai_key
 
-# .env 読み込み
+# .env 読み込み（ローカルのみ、Cloudでは無視される）
 load_dotenv()
-set_default_openai_key(os.getenv("OPENAI_API_KEY"))
+
+# 環境に応じてAPIキーを取得
+def get_openai_key():
+    if "OPENAI_API_KEY" in st.secrets:
+        return st.secrets["OPENAI_API_KEY"]
+    return os.getenv("OPENAI_API_KEY")
+
+# エージェントSDKにセット
+api_key = get_openai_key()
+if not api_key:
+    st.error("❌ OpenAI APIキーが設定されていません。Secretsまたは.envに設定してください。")
+else:
+    set_default_openai_key(api_key)
 
 # サイドバー表示
 show_sidebar()
